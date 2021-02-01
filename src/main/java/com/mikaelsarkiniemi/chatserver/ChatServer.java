@@ -32,11 +32,9 @@ public class ChatServer {
                 }
             });
 
-            HttpContext chcontext = server.createContext("/chat", new ChatHandler());
-
-            //Creating context for user registration
             ChatAuthenticator auth = new ChatAuthenticator();
-            chcontext.setAuthenticator(auth);
+            HttpContext chatcontext = server.createContext("/chat", new ChatHandler());
+            chatcontext.setAuthenticator(auth);
             server.createContext("/registration", new RegistrationHandler(auth));
 
             //Starting the server
@@ -61,6 +59,8 @@ public class ChatServer {
             ks.load(new FileInputStream("keystore.jks"), passphrase);
         } catch (FileNotFoundException fnfe){
             System.out.println("File not found!");
+        } catch (SecurityException se){
+            System.out.println("Passphrase is invalid");
         }
      
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");

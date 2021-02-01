@@ -26,6 +26,7 @@ public class RegistrationHandler implements HttpHandler {
             // Handle POST request
             handlePOST(exchange);
         } else {
+            // User tries to request with other method that POST
             String errorMsg = "Error 400: this type of request is not supported";
             sendErrorMsg(errorMsg, exchange, 400);
         }
@@ -33,11 +34,14 @@ public class RegistrationHandler implements HttpHandler {
 
     private void handlePOST(HttpExchange exchange){
         try{
+
+            //Checking if "Content-Type" header exists and is supported
             if (checkContentType(exchange)){
+
+                //Receiving and formatting the user info
                 InputStream reqBody = exchange.getRequestBody();
                 InputStreamReader reader = new InputStreamReader(reqBody, 
                 StandardCharsets.UTF_8);
-
                 String [] userinfo = new BufferedReader(reader).lines()
                 .collect(Collectors.joining("\n")).split(":");
 
@@ -50,6 +54,7 @@ public class RegistrationHandler implements HttpHandler {
                         sendErrorMsg(errorMsg, exchange, 403);
                     }
                 } else{
+                    //The info wasn't in "name:passwd" format
                     String errorMsg = "Error 403: Unallowed string";
                     sendErrorMsg(errorMsg, exchange, 403);
                 }

@@ -5,6 +5,7 @@ import java.util.Map;
 
 public class ChatAuthenticator extends com.sun.net.httpserver.BasicAuthenticator {
 
+    //contains all usernames and passwords
     private Map <String,String> users = null;
 
     public ChatAuthenticator(){
