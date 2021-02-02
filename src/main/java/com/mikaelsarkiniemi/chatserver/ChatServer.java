@@ -32,6 +32,7 @@ public class ChatServer {
                 }
             });
 
+            //Initializing the contexts
             ChatAuthenticator auth = new ChatAuthenticator();
             HttpContext chatcontext = server.createContext("/chat", new ChatHandler());
             chatcontext.setAuthenticator(auth);

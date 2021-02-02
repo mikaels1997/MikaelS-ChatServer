@@ -11,6 +11,7 @@ public class ChatAuthenticator extends com.sun.net.httpserver.BasicAuthenticator
     public ChatAuthenticator(){
         super("chat");
         users = new Hashtable<String,String>();
+        //creating test user for unit testing
         users.put("dummy", "passwd");
     }
 

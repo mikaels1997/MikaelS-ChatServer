@@ -21,18 +21,21 @@ public class ChatHandler implements HttpHandler{
             //Handle GET requests
             handleGET(exchange);
         } else {
+            //Request not supported
             String errorMsg = "Error 400: this type of request is not supported";
             sendErrorMsg(errorMsg, exchange, 400);
         }
     }
 
     private void handlePOST(HttpExchange exchange){
+        //Handles POST requests; user is submitting new message
         try{
             if (checkContentType(exchange)){
                 InputStream reqBody = exchange.getRequestBody();
                 InputStreamReader reader = new InputStreamReader(reqBody, 
                 StandardCharsets.UTF_8);
 
+                //Formatting the message
                 String text = new BufferedReader(reader).lines()
                 .collect(Collectors.joining("\n"));
 
@@ -43,6 +46,7 @@ public class ChatHandler implements HttpHandler{
                    exchange.sendResponseHeaders(200, -1);
                    System.out.println("POST request to /chat has been approved");
                 } else {
+                    //String is unallowed
                     String errorMsg = "Error 403: Unallowed string";
                     sendErrorMsg(errorMsg, exchange, 403);
                 }
@@ -59,16 +63,20 @@ public class ChatHandler implements HttpHandler{
     }
 
     private void handleGET(HttpExchange exchange) {
+        //Handles GET requests; user wants to see the message history
         try {
+            //Creating a test message
             String messageBody = "Test text\n";
+
+            //Formatting and sending the message history to the user
             for (String msg : messages){
                 messageBody += (msg + "\n");
             }
             byte[] msgBytes = messageBody.getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, msgBytes.length);
             OutputStream resBody = exchange.getResponseBody();
-
             resBody.write(msgBytes);
+            
             resBody.close();
             System.out.println("GET request to /chat has been approved");
 
