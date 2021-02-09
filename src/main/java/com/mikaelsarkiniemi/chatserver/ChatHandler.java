@@ -1,17 +1,25 @@
 package com.mikaelsarkiniemi.chatserver;
 
 import com.sun.net.httpserver.HttpHandler;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.stream.Collectors;
+import java.util.Collections;
 
 //implements the functions for user chatting
 public class ChatHandler implements HttpHandler{
 
-    private ArrayList<String> messages = new ArrayList<String>();
+    private ArrayList<ChatMessage> messages = new ArrayList<ChatMessage>();
     
     public void handle(HttpExchange exchange) throws UnsupportedEncodingException {   
         if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
@@ -39,14 +47,38 @@ public class ChatHandler implements HttpHandler{
                 String text = new BufferedReader(reader).lines()
                 .collect(Collectors.joining("\n"));
 
-                if(text.length() != 0){
-                   //Everything OK, sending a response
-                   messages.add(text);
-                   reqBody.close();
-                   exchange.sendResponseHeaders(200, -1);
-                   System.out.println("POST request to /chat has been approved");
-                } else {
-                    //String is unallowed
+                try{
+                    JSONObject js = new JSONObject(text);
+                    String msgContent = js.getString("message");
+
+                    if (msgContent.strip().isEmpty()){
+                        // User info contains empty strings
+                        throw new JSONException("");
+                    } else {
+                        // Everything is OK
+                        String nick = js.getString("user");
+
+                        String dateStr = js.getString("sent");
+                        OffsetDateTime odt = OffsetDateTime.parse(dateStr);
+
+                        ChatMessage newMessage = new ChatMessage(nick, msgContent, odt);
+                        messages.add(newMessage);
+
+                        // Sort the messages by date
+                        Collections.sort(messages, new Comparator<ChatMessage>() {
+                            @Override
+                            public int compare(ChatMessage lhs, ChatMessage rhs) {
+                                return lhs.sent.compareTo(rhs.sent);
+                            }
+                        });
+                        
+                        reqBody.close();
+                        exchange.sendResponseHeaders(200, -1);
+                        System.out.println("POST request to /chat has been approved");
+                    }
+
+                } catch (JSONException je){
+                    //The info wasn't in proper JSON format
                     String errorMsg = "Error 403: Unallowed string";
                     sendErrorMsg(errorMsg, exchange, 403);
                 }
@@ -65,21 +97,31 @@ public class ChatHandler implements HttpHandler{
     private void handleGET(HttpExchange exchange) {
         //Handles GET requests; user wants to see the message history
         try {
-            //Creating a test message
-            String messageBody = "Test text\n";
+            if (messages.isEmpty()) {
+                // No message history
+                exchange.sendResponseHeaders(204, -1);
+                System.out.println("User requested empty msghistory");
+            } else {
+                //Formatting and sending the message history to the user
+                JSONArray msgJsHistory = new JSONArray();
 
-            //Formatting and sending the message history to the user
-            for (String msg : messages){
-                messageBody += (msg + "\n");
+                for (ChatMessage msg : messages){
+                    System.out.println(msg.getDate());
+                    JSONObject newJson = new JSONObject().put("user", msg.getNick())
+                    .put("message", msg.getMsg()).put("sent", msg.getDate());
+                    msgJsHistory.put(newJson);
+                }
+                
+                String msgHistory = msgJsHistory.toString();
+                byte[] msgBytes = msgHistory.getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(200, msgBytes.length);
+                OutputStream resBody = exchange.getResponseBody();
+                resBody.write(msgBytes);
+                
+                resBody.close();
+                System.out.println("GET request to /chat has been approved");
             }
-            byte[] msgBytes = messageBody.getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(200, msgBytes.length);
-            OutputStream resBody = exchange.getResponseBody();
-            resBody.write(msgBytes);
-            
-            resBody.close();
-            System.out.println("GET request to /chat has been approved");
-
+            //Formatting and sending the message history to the user
         } catch (IOException ioe) {
             System.out.println("Sending response for GET request failed");
             String error = "Internal server error";
@@ -94,7 +136,7 @@ public class ChatHandler implements HttpHandler{
             OutputStream resBody = exchange.getResponseBody();
             resBody.write(msgBytes);
             resBody.close();
-            System.out.println("(/chat)Following error has been sent: "+msg);
+            System.out.println("(/chat) Responding to the user with error code "+rCode);
         } catch (IOException ioe) {
             System.out.println("An error has occurred");
         }
@@ -104,6 +146,6 @@ public class ChatHandler implements HttpHandler{
         //Returns true if Content-Type header exists and is supported
         Headers reqHeaders = exchange.getRequestHeaders();
         String type = reqHeaders.getFirst("Content-Type");
-        return type.equalsIgnoreCase("text/plain");
+        return type.equalsIgnoreCase("application/json");
     }
 }

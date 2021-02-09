@@ -10,6 +10,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 import com.sun.net.httpserver.HttpHandler;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
@@ -38,29 +42,39 @@ public class RegistrationHandler implements HttpHandler {
             //Checking if "Content-Type" header exists and is supported
             if (checkContentType(exchange)){
 
-                //Receiving and formatting the user info
+                //Receiving the user info
                 InputStream reqBody = exchange.getRequestBody();
                 InputStreamReader reader = new InputStreamReader(reqBody, 
                 StandardCharsets.UTF_8);
-                String [] userinfo = new BufferedReader(reader).lines()
-                .collect(Collectors.joining("\n")).split(":");
+                String userinfo = new BufferedReader(reader).lines()
+                .collect(Collectors.joining("\n"));
 
-                //checking if user sent the info in correct form
-                if (userinfo.length == 2){
-                    if(auth.addUser(userinfo[0], userinfo[1])){
-                        System.out.println("User: "+userinfo[0]+" added");
-                    } else {
+                // Formatting the info into JSON for storage
+                try{
+                    JSONObject regInfo = new JSONObject(userinfo);
+                    String username = regInfo.getString("username");
+                    String passwd = regInfo.getString("password");
+                    String email = regInfo.getString("email");
+                    User user = new User(username, email, passwd);
+                    if (username.strip().isEmpty()||passwd.strip().isEmpty()||email.strip().isEmpty()){
+                        // User info contains empty strings
+                        throw new JSONException("");
+                    }
+                    if (auth.addUser(username, user)){
+                        // Everything OK, registering the user
+                        exchange.sendResponseHeaders(200, -1);
+                        System.out.println("User: \""+username+"\" registered successfully");
+                    } else{
                         String errorMsg = "Error 403: User already registered";
                         sendErrorMsg(errorMsg, exchange, 403);
                     }
-                } else{
-                    //The info wasn't in "name:passwd" format
+                } catch (JSONException je){
+                    //The info wasn't in proper JSON format
                     String errorMsg = "Error 403: Unallowed string";
                     sendErrorMsg(errorMsg, exchange, 403);
                 }
 
                 reqBody.close();
-                exchange.sendResponseHeaders(200, -1);
                 reader.close();
                 
             } else{
@@ -81,9 +95,9 @@ public class RegistrationHandler implements HttpHandler {
             OutputStream resBody = exchange.getResponseBody();
             resBody.write(msgBytes);
             resBody.close();
-            System.out.println("(/registration)Following error has been sent: "+msg);
+            System.out.println("(/registration) Responding to the user with error code "+rCode);
         } catch (IOException ioe) {
-            System.out.println("An error has occurred");
+            System.out.println("An error with sending the errormsg has occurred");
         }
     }
 
@@ -91,6 +105,6 @@ public class RegistrationHandler implements HttpHandler {
         //Returns true if Content-Type header exists and is supported
         Headers reqHeaders = exchange.getRequestHeaders();
         String type = reqHeaders.getFirst("Content-Type");
-        return type.equalsIgnoreCase("text/plain");
+        return type.equalsIgnoreCase("application/json");
     }
 }

@@ -6,19 +6,19 @@ import java.util.Map;
 public class ChatAuthenticator extends com.sun.net.httpserver.BasicAuthenticator {
 
     //contains all usernames and passwords
-    private Map <String,String> users = null;
+    private Map <String,User> users = null;
 
     public ChatAuthenticator(){
         super("chat");
-        users = new Hashtable<String,String>();
+        users = new Hashtable<String,User>();
         //creating test user for unit testing
-        users.put("dummy", "passwd");
+        //users.put("dummy", "passwd")
     }
 
     @Override
     public boolean checkCredentials(String username, String password) {
         //Returns true if username and password matches, otherwise returns false
-        if (users.get(username).equals(password)){
+        if (users.containsKey(username) && users.get(username).getPasswd().equals(password)){
             return true;
         } else {
             System.out.println("GET request to /chat has been denied; info not correct");
@@ -26,8 +26,8 @@ public class ChatAuthenticator extends com.sun.net.httpserver.BasicAuthenticator
         }
     }
 
-    public boolean addUser(String userName, String password) {
-        if (users.putIfAbsent(userName, password) == null){
+    public boolean addUser(String nick, User user) {
+        if (users.putIfAbsent(nick, user) == null){
             return true;
         } else{
             return false;

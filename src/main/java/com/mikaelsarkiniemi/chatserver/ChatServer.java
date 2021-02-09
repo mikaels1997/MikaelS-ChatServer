@@ -25,7 +25,7 @@ public class ChatServer {
             server.setHttpsConfigurator (new HttpsConfigurator(sslContext) {
                 @Override
                 public void configure (HttpsParameters params) {
-                InetSocketAddress remote = params.getClientAddress();
+                // InetSocketAddress remote = params.getClientAddress()
                 SSLContext c = getSSLContext();
                 SSLParameters sslparams = c.getDefaultSSLParameters();
                 params.setSSLParameters(sslparams);
