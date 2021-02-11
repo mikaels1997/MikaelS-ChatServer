@@ -19,7 +19,7 @@ import java.util.Collections;
 //implements the functions for user chatting
 public class ChatHandler implements HttpHandler{
 
-    private ArrayList<ChatMessage> messages = new ArrayList<ChatMessage>();
+    private ArrayList<ChatMessage> messages = new ArrayList<>();
     
     public void handle(HttpExchange exchange) throws UnsupportedEncodingException {   
         if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
@@ -39,48 +39,42 @@ public class ChatHandler implements HttpHandler{
         //Handles POST requests; user is submitting new message
         try{
             if (checkContentType(exchange)){
+                // Content-Type is supported
+
                 InputStream reqBody = exchange.getRequestBody();
                 InputStreamReader reader = new InputStreamReader(reqBody, 
                 StandardCharsets.UTF_8);
-
-                //Formatting the message
                 String text = new BufferedReader(reader).lines()
                 .collect(Collectors.joining("\n"));
 
-                try{
-                    JSONObject js = new JSONObject(text);
-                    String msgContent = js.getString("message");
+                JSONObject js = new JSONObject(text);
+                String msgContent = js.getString("message");
 
-                    if (msgContent.strip().isEmpty()){
-                        // User info contains empty strings
-                        throw new JSONException("");
-                    } else {
-                        // Everything is OK
-                        String nick = js.getString("user");
+                if (msgContent.strip().isEmpty()){
+                    // Message is empty or only contains white spaces
+                    throw new JSONException("");
+                } else {
 
-                        String dateStr = js.getString("sent");
-                        OffsetDateTime odt = OffsetDateTime.parse(dateStr);
+                    // Creating an instance of ChatMessage
+                    String nick = js.getString("user");
+                    String dateStr = js.getString("sent");
+                    OffsetDateTime odt = OffsetDateTime.parse(dateStr);
+                    ChatMessage newMessage = new ChatMessage(nick, msgContent, odt);
 
-                        ChatMessage newMessage = new ChatMessage(nick, msgContent, odt);
-                        messages.add(newMessage);
+                    // Storing the message
+                    messages.add(newMessage);
 
-                        // Sort the messages by date
-                        Collections.sort(messages, new Comparator<ChatMessage>() {
-                            @Override
-                            public int compare(ChatMessage lhs, ChatMessage rhs) {
-                                return lhs.sent.compareTo(rhs.sent);
-                            }
-                        });
-                        
-                        reqBody.close();
-                        exchange.sendResponseHeaders(200, -1);
-                        System.out.println("POST request to /chat has been approved");
-                    }
-
-                } catch (JSONException je){
-                    //The info wasn't in proper JSON format
-                    String errorMsg = "Error 403: Unallowed string";
-                    sendErrorMsg(errorMsg, exchange, 403);
+                    // Sort all stored messages by date
+                    Collections.sort(messages, new Comparator<ChatMessage>() {
+                        @Override
+                        public int compare(ChatMessage lhs, ChatMessage rhs) {
+                            return lhs.sent.compareTo(rhs.sent);
+                        }
+                    });
+                    
+                    reqBody.close();
+                    exchange.sendResponseHeaders(200, -1);
+                    System.out.println("POST request to /chat has been approved");
                 }
                 reader.close();
             } else{
@@ -91,6 +85,11 @@ public class ChatHandler implements HttpHandler{
             System.out.println("Sending response for POST request failed");
             String error = "Internal server error";
             sendErrorMsg(error, exchange, 500);
+        } catch (JSONException je){
+            //The info wasn't in proper JSON format
+            System.out.println("The info wasnt in proper json format");
+            String errorMsg = "Error 403: Unallowed string";
+            sendErrorMsg(errorMsg, exchange, 403);
         }
     }
 
@@ -100,18 +99,20 @@ public class ChatHandler implements HttpHandler{
             if (messages.isEmpty()) {
                 // No message history
                 exchange.sendResponseHeaders(204, -1);
-                System.out.println("User requested empty msghistory");
+                System.out.println("User requested empty msg history");
             } else {
-                //Formatting and sending the message history to the user
-                JSONArray msgJsHistory = new JSONArray();
+                // Message history exists
 
+                //Creating JSONarray containing every individual message information
+                JSONArray msgJsHistory = new JSONArray();
                 for (ChatMessage msg : messages){
                     System.out.println(msg.getDate());
                     JSONObject newJson = new JSONObject().put("user", msg.getNick())
                     .put("message", msg.getMsg()).put("sent", msg.getDate());
                     msgJsHistory.put(newJson);
                 }
-                
+      
+                // Forwarding the message history to the user
                 String msgHistory = msgJsHistory.toString();
                 byte[] msgBytes = msgHistory.getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(200, msgBytes.length);
@@ -121,7 +122,6 @@ public class ChatHandler implements HttpHandler{
                 resBody.close();
                 System.out.println("GET request to /chat has been approved");
             }
-            //Formatting and sending the message history to the user
         } catch (IOException ioe) {
             System.out.println("Sending response for GET request failed");
             String error = "Internal server error";

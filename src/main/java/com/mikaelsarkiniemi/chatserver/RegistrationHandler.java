@@ -30,7 +30,7 @@ public class RegistrationHandler implements HttpHandler {
             // Handle POST request
             handlePOST(exchange);
         } else {
-            // User tries to request with other method that POST
+            // Request type not supported
             String errorMsg = "Error 400: this type of request is not supported";
             sendErrorMsg(errorMsg, exchange, 400);
         }
@@ -38,7 +38,6 @@ public class RegistrationHandler implements HttpHandler {
 
     private void handlePOST(HttpExchange exchange){
         try{
-
             //Checking if "Content-Type" header exists and is supported
             if (checkContentType(exchange)){
 
@@ -49,28 +48,23 @@ public class RegistrationHandler implements HttpHandler {
                 String userinfo = new BufferedReader(reader).lines()
                 .collect(Collectors.joining("\n"));
 
-                // Formatting the info into JSON for storage
-                try{
-                    JSONObject regInfo = new JSONObject(userinfo);
-                    String username = regInfo.getString("username");
-                    String passwd = regInfo.getString("password");
-                    String email = regInfo.getString("email");
-                    User user = new User(username, email, passwd);
-                    if (username.strip().isEmpty()||passwd.strip().isEmpty()||email.strip().isEmpty()){
-                        // User info contains empty strings
-                        throw new JSONException("");
-                    }
-                    if (auth.addUser(username, user)){
-                        // Everything OK, registering the user
-                        exchange.sendResponseHeaders(200, -1);
-                        System.out.println("User: \""+username+"\" registered successfully");
-                    } else{
-                        String errorMsg = "Error 403: User already registered";
-                        sendErrorMsg(errorMsg, exchange, 403);
-                    }
-                } catch (JSONException je){
-                    //The info wasn't in proper JSON format
-                    String errorMsg = "Error 403: Unallowed string";
+                // Converting info into JSON and creating new user
+                JSONObject regInfo = new JSONObject(userinfo);
+                String username = regInfo.getString("username");
+                String passwd = regInfo.getString("password");
+                String email = regInfo.getString("email");
+                User user = new User(username, email, passwd);
+
+                if (username.strip().isEmpty()||passwd.strip().isEmpty()||email.strip().isEmpty()){
+                    // User info contains empty strings
+                    throw new JSONException("");
+                }
+                if (auth.addUser(username, user)){
+                    // Everything OK, registering the user
+                    exchange.sendResponseHeaders(200, -1);
+                    System.out.println("User: \""+username+"\" registered successfully");
+                } else{
+                    String errorMsg = "Error 403: User already registered";
                     sendErrorMsg(errorMsg, exchange, 403);
                 }
 
@@ -85,6 +79,10 @@ public class RegistrationHandler implements HttpHandler {
             System.out.println("Sending response for POST request failed");
             String error = "Internal server error";
             sendErrorMsg(error, exchange, 500);
+        } catch (JSONException je){
+            //The info wasn't in proper JSON format
+            String errorMsg = "Error 403: Unallowed string";
+            sendErrorMsg(errorMsg, exchange, 403);
         }
     }
     

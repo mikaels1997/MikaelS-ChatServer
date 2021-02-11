@@ -1,5 +1,6 @@
 package com.mikaelsarkiniemi.chatserver;
 
+// Contains information of individual user
 public class User {
     String name;
     String email;

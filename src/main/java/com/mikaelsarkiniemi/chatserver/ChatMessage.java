@@ -4,9 +4,10 @@ import java.time.OffsetDateTime;
 
 public class ChatMessage {
 
-    public OffsetDateTime sent;
+    // UTC timestamp, username, message content
+    public final OffsetDateTime sent;
     public String nick;
-    public String message;
+    public final String message;
 
     public ChatMessage(String n, String m, OffsetDateTime s){
         this.nick = n;
