@@ -6,20 +6,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.stream.Collectors;
-import java.util.Collections;
 
-//implements the functions for user chatting
-public class ChatHandler implements HttpHandler{
+// Implements the functions for user chatting
+public class ChatHandler extends ContextHandler implements HttpHandler {
 
+    // For temporal storage when responding to GET request (message history)
     private ArrayList<ChatMessage> messages = new ArrayList<>();
+
+    ChatDatabase database = ChatDatabase.getInstance();
     
     public void handle(HttpExchange exchange) throws UnsupportedEncodingException {   
         if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
@@ -41,6 +41,7 @@ public class ChatHandler implements HttpHandler{
             if (checkContentType(exchange)){
                 // Content-Type is supported
 
+                // Receiving the request
                 InputStream reqBody = exchange.getRequestBody();
                 InputStreamReader reader = new InputStreamReader(reqBody, 
                 StandardCharsets.UTF_8);
@@ -62,16 +63,8 @@ public class ChatHandler implements HttpHandler{
                     ChatMessage newMessage = new ChatMessage(nick, msgContent, odt);
 
                     // Storing the message
-                    messages.add(newMessage);
+                    database.storeMessage(nick, msgContent, newMessage.dateAsInt());
 
-                    // Sort all stored messages by date
-                    Collections.sort(messages, new Comparator<ChatMessage>() {
-                        @Override
-                        public int compare(ChatMessage lhs, ChatMessage rhs) {
-                            return lhs.sent.compareTo(rhs.sent);
-                        }
-                    });
-                    
                     reqBody.close();
                     exchange.sendResponseHeaders(200, -1);
                     System.out.println("POST request to /chat has been approved");
@@ -83,19 +76,17 @@ public class ChatHandler implements HttpHandler{
             }
         } catch (IOException ioe){
             System.out.println("Sending response for POST request failed");
-            String error = "Internal server error";
-            sendErrorMsg(error, exchange, 500);
+            sendErrorMsg("Internal server error", exchange, 500);
         } catch (JSONException je){
-            //The info wasn't in proper JSON format
             System.out.println("The info wasnt in proper json format");
-            String errorMsg = "Error 403: Unallowed string";
-            sendErrorMsg(errorMsg, exchange, 403);
-        }
+            sendErrorMsg("Error 403: Unallowed string", exchange, 403);
+        } 
     }
 
     private void handleGET(HttpExchange exchange) {
         //Handles GET requests; user wants to see the message history
         try {
+            messages = database.readMessages(); // Stores messages to temporal array
             if (messages.isEmpty()) {
                 // No message history
                 exchange.sendResponseHeaders(204, -1);
@@ -105,8 +96,8 @@ public class ChatHandler implements HttpHandler{
 
                 //Creating JSONarray containing every individual message information
                 JSONArray msgJsHistory = new JSONArray();
+
                 for (ChatMessage msg : messages){
-                    System.out.println(msg.getDate());
                     JSONObject newJson = new JSONObject().put("user", msg.getNick())
                     .put("message", msg.getMsg()).put("sent", msg.getDate());
                     msgJsHistory.put(newJson);
@@ -124,28 +115,7 @@ public class ChatHandler implements HttpHandler{
             }
         } catch (IOException ioe) {
             System.out.println("Sending response for GET request failed");
-            String error = "Internal server error";
-            sendErrorMsg(error, exchange, 500);
+            sendErrorMsg("Internal server error", exchange, 500);
         }
-    }
-
-    private void sendErrorMsg(String msg, HttpExchange exchange, int rCode){
-        byte[] msgBytes = msg.getBytes(StandardCharsets.UTF_8);
-        try{        
-            exchange.sendResponseHeaders(rCode, msgBytes.length);
-            OutputStream resBody = exchange.getResponseBody();
-            resBody.write(msgBytes);
-            resBody.close();
-            System.out.println("(/chat) Responding to the user with error code "+rCode);
-        } catch (IOException ioe) {
-            System.out.println("An error has occurred");
-        }
-    }
-
-    private boolean checkContentType(HttpExchange exchange){
-        //Returns true if Content-Type header exists and is supported
-        Headers reqHeaders = exchange.getRequestHeaders();
-        String type = reqHeaders.getFirst("Content-Type");
-        return type.equalsIgnoreCase("application/json");
     }
 }

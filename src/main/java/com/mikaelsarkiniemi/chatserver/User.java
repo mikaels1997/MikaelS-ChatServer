@@ -24,6 +24,9 @@ public class User {
     public void setEmail(String em){
         this.email = em;
     }
+    public void setPasswd(String p){
+        this.passwd = p;
+    }
     public String getPasswd(){
         return this.passwd;
     }

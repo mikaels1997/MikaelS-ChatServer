@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
@@ -14,10 +13,9 @@ import com.sun.net.httpserver.HttpHandler;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
-public class RegistrationHandler implements HttpHandler {
+public class RegistrationHandler extends ContextHandler implements HttpHandler {
 
     ChatAuthenticator auth = null;
 
@@ -59,7 +57,7 @@ public class RegistrationHandler implements HttpHandler {
                     // User info contains empty strings
                     throw new JSONException("");
                 }
-                if (auth.addUser(username, user)){
+                if (auth.addUser(user)){
                     // Everything OK, registering the user
                     exchange.sendResponseHeaders(200, -1);
                     System.out.println("User: \""+username+"\" registered successfully");
@@ -84,25 +82,5 @@ public class RegistrationHandler implements HttpHandler {
             String errorMsg = "Error 403: Unallowed string";
             sendErrorMsg(errorMsg, exchange, 403);
         }
-    }
-    
-    private void sendErrorMsg(String msg, HttpExchange exchange, int rCode){
-        byte[] msgBytes = msg.getBytes(StandardCharsets.UTF_8);
-        try{        
-            exchange.sendResponseHeaders(rCode, msgBytes.length);
-            OutputStream resBody = exchange.getResponseBody();
-            resBody.write(msgBytes);
-            resBody.close();
-            System.out.println("(/registration) Responding to the user with error code "+rCode);
-        } catch (IOException ioe) {
-            System.out.println("An error with sending the errormsg has occurred");
-        }
-    }
-
-    private boolean checkContentType(HttpExchange exchange){
-        //Returns true if Content-Type header exists and is supported
-        Headers reqHeaders = exchange.getRequestHeaders();
-        String type = reqHeaders.getFirst("Content-Type");
-        return type.equalsIgnoreCase("application/json");
     }
 }

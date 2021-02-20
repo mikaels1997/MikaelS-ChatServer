@@ -1,22 +1,17 @@
 package com.mikaelsarkiniemi.chatserver;
 
-import java.util.Hashtable;
-import java.util.Map;
-
 public class ChatAuthenticator extends com.sun.net.httpserver.BasicAuthenticator {
 
-    //contains all usernames and passwords
-    private Map <String,User> users = null;
+    private ChatDatabase database = ChatDatabase.getInstance();
 
     public ChatAuthenticator(){
         super("chat");
-        users = new Hashtable<String,User>();
     }
 
     @Override
     public boolean checkCredentials(String username, String password) {
         //Returns true if username and password matches, otherwise returns false
-        if (users.containsKey(username) && users.get(username).getPasswd().equals(password)){
+        if (database.validateUser(username, password)){
             return true;
         } else {
             System.out.println("GET request to /chat has been denied; info not correct");
@@ -24,11 +19,9 @@ public class ChatAuthenticator extends com.sun.net.httpserver.BasicAuthenticator
         }
     }
 
-    public boolean addUser(String nick, User user) {
-        if (users.putIfAbsent(nick, user) == null){
-            return true;
-        } else{
-            return false;
-        }
+    public boolean addUser(User user) {
+        // returns true if user does not already exist
+        return database.registerUser(user.getUsername(), 
+            user.getPasswd(), user.getEmail());
     }
 }
