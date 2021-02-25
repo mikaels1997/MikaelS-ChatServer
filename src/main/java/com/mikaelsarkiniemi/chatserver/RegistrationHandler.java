@@ -23,7 +23,7 @@ public class RegistrationHandler extends ContextHandler implements HttpHandler {
         this.auth = authenticator;
     }
 
-    public void handle(HttpExchange exchange) throws UnsupportedEncodingException {   
+    public void handle(HttpExchange exchange) throws UnsupportedEncodingException {
         if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
             // Handle POST request
             handlePOST(exchange);
@@ -34,17 +34,15 @@ public class RegistrationHandler extends ContextHandler implements HttpHandler {
         }
     }
 
-    private void handlePOST(HttpExchange exchange){
-        try{
-            //Checking if "Content-Type" header exists and is supported
-            if (checkContentType(exchange)){
+    private void handlePOST(HttpExchange exchange) {
+        try {
+            // Checking if "Content-Type" header exists and is supported
+            if (checkContentType(exchange)) {
 
-                //Receiving the user info
+                // Receiving the user info
                 InputStream reqBody = exchange.getRequestBody();
-                InputStreamReader reader = new InputStreamReader(reqBody, 
-                StandardCharsets.UTF_8);
-                String userinfo = new BufferedReader(reader).lines()
-                .collect(Collectors.joining("\n"));
+                InputStreamReader reader = new InputStreamReader(reqBody, StandardCharsets.UTF_8);
+                String userinfo = new BufferedReader(reader).lines().collect(Collectors.joining("\n"));
 
                 // Converting info into JSON and creating new user
                 JSONObject regInfo = new JSONObject(userinfo);
@@ -53,32 +51,32 @@ public class RegistrationHandler extends ContextHandler implements HttpHandler {
                 String email = regInfo.getString("email");
                 User user = new User(username, email, passwd);
 
-                if (username.strip().isEmpty()||passwd.strip().isEmpty()||email.strip().isEmpty()){
+                if (username.strip().isEmpty() || passwd.strip().isEmpty() || email.strip().isEmpty()) {
                     // User info contains empty strings
                     throw new JSONException("");
                 }
-                if (auth.addUser(user)){
+                if (auth.addUser(user)) {
                     // Everything OK, registering the user
                     exchange.sendResponseHeaders(200, -1);
-                    System.out.println("User: \""+username+"\" registered successfully");
-                } else{
+                    System.out.println("User: \"" + username + "\" registered successfully");
+                } else {
                     String errorMsg = "Error 403: User already registered";
                     sendErrorMsg(errorMsg, exchange, 403);
                 }
 
                 reqBody.close();
                 reader.close();
-                
-            } else{
+
+            } else {
                 String msg = "Error 400: Content-Type header needs to exist and be supported";
                 sendErrorMsg(msg, exchange, 400);
             }
-        } catch (IOException ioe){
+        } catch (IOException ioe) {
             System.out.println("Sending response for POST request failed");
             String error = "Internal server error";
             sendErrorMsg(error, exchange, 500);
-        } catch (JSONException je){
-            //The info wasn't in proper JSON format
+        } catch (JSONException je) {
+            // The info wasn't in proper JSON format
             String errorMsg = "Error 403: Unallowed string";
             sendErrorMsg(errorMsg, exchange, 403);
         }

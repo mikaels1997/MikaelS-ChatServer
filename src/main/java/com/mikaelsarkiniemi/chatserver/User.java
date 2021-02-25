@@ -6,28 +6,33 @@ public class User {
     String email;
     String passwd;
 
-    public User(String n, String e, String p){
+    public User(String n, String e, String p) {
         this.name = n;
         this.email = e;
         this.passwd = p;
     }
 
-    public String getUsername(){
+    public String getUsername() {
         return this.name;
     }
-    public void setUsername(String username){
+
+    public void setUsername(String username) {
         this.name = username;
     }
-    public String getEmail(){
+
+    public String getEmail() {
         return this.email;
     }
-    public void setEmail(String em){
+
+    public void setEmail(String em) {
         this.email = em;
     }
-    public void setPasswd(String p){
+
+    public void setPasswd(String p) {
         this.passwd = p;
     }
-    public String getPasswd(){
+
+    public String getPasswd() {
         return this.passwd;
     }
 }

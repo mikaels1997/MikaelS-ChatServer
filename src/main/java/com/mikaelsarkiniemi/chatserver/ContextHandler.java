@@ -11,21 +11,21 @@ import com.sun.net.httpserver.HttpExchange;
 public abstract class ContextHandler {
 
     // Sends a specific error message to the user
-    protected void sendErrorMsg(String msg, HttpExchange exchange, int rCode){
+    protected void sendErrorMsg(String msg, HttpExchange exchange, int rCode) {
         byte[] msgBytes = msg.getBytes(StandardCharsets.UTF_8);
-        try{        
+        try {
             exchange.sendResponseHeaders(rCode, msgBytes.length);
             OutputStream resBody = exchange.getResponseBody();
             resBody.write(msgBytes);
             resBody.close();
-            System.out.println("Responding to the user with error code "+rCode);
+            System.out.println("Responding to the user with error code " + rCode);
         } catch (IOException ioe) {
             System.out.println("An error has occurred");
         }
     }
-    
-    //Returns true if Content-Type header exists and is supported
-    protected boolean checkContentType(HttpExchange exchange){
+
+    // Returns true if Content-Type header exists and is supported
+    protected boolean checkContentType(HttpExchange exchange) {
         Headers reqHeaders = exchange.getRequestHeaders();
         String type = reqHeaders.getFirst("Content-Type");
         return type.equalsIgnoreCase("application/json");

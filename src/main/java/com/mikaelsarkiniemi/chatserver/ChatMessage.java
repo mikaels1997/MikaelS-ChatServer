@@ -19,10 +19,10 @@ public class ChatMessage {
 
     public long dateAsInt() {
         // Implemented for storing the message date as numerical form to database.db
-        return sent.toEpochSecond();
+        return sent.toInstant().toEpochMilli();
     }
     public void setSent(long epoch) {
-        this.sent = OffsetDateTime.ofInstant(Instant.ofEpochSecond(epoch), ZoneOffset.UTC);
+        this.sent = OffsetDateTime.ofInstant(Instant.ofEpochMilli(epoch), ZoneOffset.UTC);
     }
 
     public String getNick(){
