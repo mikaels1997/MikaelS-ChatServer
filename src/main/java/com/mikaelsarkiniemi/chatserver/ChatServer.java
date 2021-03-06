@@ -1,10 +1,14 @@
 package com.mikaelsarkiniemi.chatserver;
 
+import java.io.Console;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
+import java.sql.SQLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -21,9 +25,20 @@ public class ChatServer {
     public static void main(String[] args) throws Exception {
 
         try {
+
+            if(args.length != 3){ // args defined in ".vscode/launch.json file"
+                // database file name -> arg[0]
+                // keystore file name -> arg[1]
+                // passphrase -> arg[2]
+                System.out.println("Didn't give 3 arguments");
+                return;
+            }
+            ChatDatabase database = ChatDatabase.getInstance();
+            database.open(args[0]);
+
             HttpsServer server = HttpsServer.create(new InetSocketAddress(8001), 0);
 
-            SSLContext sslContext = chatServerSSLContext();
+            SSLContext sslContext = chatServerSSLContext(args[2].toCharArray(), args[1]);
             server.setHttpsConfigurator(new HttpsConfigurator(sslContext) {
                 @Override
                 public void configure(HttpsParameters params) {
@@ -41,10 +56,22 @@ public class ChatServer {
             server.createContext("/registration", new RegistrationHandler(auth));
 
             // Starting the server
-            server.setExecutor(null);
+            ExecutorService executor = Executors.newCachedThreadPool();
+            server.setExecutor(executor);
             server.start();
 
-            // Error handling
+            Console console = System.console();
+            boolean running = true;
+            while (running){
+                if (console.readLine().equals("/quit")) {
+                    // Stopping the server
+                    running = false;
+                    server.stop(3);
+                    database.close();
+                }
+            }
+
+        // Error handling
         } catch (FileNotFoundException e) {
             System.out.println("Certificate not found!");
             e.printStackTrace();
@@ -52,16 +79,17 @@ public class ChatServer {
             System.out.println("Creation of the server failed");
         } catch (IllegalArgumentException iae) {
             System.out.println("Port number is not valid");
+        } catch (SQLException sqle) {
+            System.out.println("Error while trying to close the database");
         }
     }
 
-    private static SSLContext chatServerSSLContext() throws Exception {
-        char[] passphrase = "mikaelsarkiniemiohjelmointi397!".toCharArray();
+    private static SSLContext chatServerSSLContext(char[] passphrase, String keystoreName) throws Exception {
         KeyStore ks = KeyStore.getInstance("JKS");
         try {
-            ks.load(new FileInputStream("keystore.jks"), passphrase);
+            ks.load(new FileInputStream(keystoreName), passphrase);
         } catch (FileNotFoundException fnfe) {
-            System.out.println("File not found!");
+            System.out.println("Keystore file is not found!");
         } catch (SecurityException se) {
             System.out.println("Passphrase is invalid");
         }

@@ -21,11 +21,7 @@ public class ChatDatabase {
     private SecureRandom secureRandom = new SecureRandom();
 
     private ChatDatabase() {
-        try {
-            open("database.db");
-        } catch (SQLException se) {
-            System.out.println("SQLEEERRORIR");
-        }
+
     }
 
     public static synchronized ChatDatabase getInstance() {
@@ -44,6 +40,10 @@ public class ChatDatabase {
             // If database.db does not exist it'll be created
             initializeDatabase();
         }
+    }
+
+    public void close() throws SQLException {
+        connection.close();
     }
 
     public boolean registerUser(String name, String passwd, String email) {

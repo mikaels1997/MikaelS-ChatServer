@@ -25,6 +25,8 @@ public class RegistrationHandler extends ContextHandler implements HttpHandler {
 
     public void handle(HttpExchange exchange) throws UnsupportedEncodingException {
         if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
+            System.out.println("Request handled in thread " +
+            Thread.currentThread().getId());
             // Handle POST request
             handlePOST(exchange);
         } else {

@@ -19,15 +19,18 @@ import java.util.stream.Collectors;
 // Implements the functions for user chatting
 public class ChatHandler extends ContextHandler implements HttpHandler {
 
-    // For temporal storage when responding to GET request (message history)
-    private ArrayList<ChatMessage> messages = new ArrayList<>();
-    ChatDatabase database = ChatDatabase.getInstance();
+    final ChatDatabase database = ChatDatabase.getInstance();
 
     public void handle(HttpExchange exchange) throws UnsupportedEncodingException {
         if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
+            System.out.println("Request handled in thread " +
+            Thread.currentThread().getId());
             // Handle POST request
             handlePOST(exchange);
         } else if (exchange.getRequestMethod().equalsIgnoreCase("GET")) {
+            System.out.println("Request handled in thread " +
+            Thread.currentThread().getId());
+            
             // Handle GET requests
             handleGET(exchange);
         } else {
@@ -89,6 +92,9 @@ public class ChatHandler extends ContextHandler implements HttpHandler {
     private void handleGET(HttpExchange exchange) {
         // Handles GET requests; user wants to see the message history
         try {
+
+            // For temporal storage for msg history when responding to GET request
+            ArrayList<ChatMessage> messages;
 
             if (exchange.getRequestHeaders().containsKey("If-Modified-Since")) {
                 // Has done GET requests before
