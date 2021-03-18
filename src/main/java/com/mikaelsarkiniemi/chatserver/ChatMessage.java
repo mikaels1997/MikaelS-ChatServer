@@ -10,11 +10,13 @@ public class ChatMessage {
     public OffsetDateTime sent;
     public String nick;
     public String message;
+    public String channel;
 
-    public ChatMessage(String n, String m, OffsetDateTime s){
+    public ChatMessage(String n, String m, OffsetDateTime s, String c){
         this.nick = n;
         this.message = m;
         this.sent = s;
+        this.channel = c;
     }
 
     public long dateAsInt() {
@@ -33,5 +35,11 @@ public class ChatMessage {
     }
     public OffsetDateTime getDate(){
         return this.sent;
+    }
+    public String getChannel(){
+        return this.channel;
+    }
+    public void setChannel(String c){
+        this.channel = c;
     }
 }

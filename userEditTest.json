@@ -1,0 +1,10 @@
+{
+    "action" : "edit",
+    "userdetails": 
+    {
+        "username" : "username1",
+        "password" : "vaihtusalasana!",
+        "role" : "user",
+        "email" : "vaihtupa_emailikin!"
+    }
+}

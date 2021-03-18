@@ -15,6 +15,7 @@ import org.json.JSONObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+// Implements the functions for user registration
 public class RegistrationHandler extends ContextHandler implements HttpHandler {
 
     ChatAuthenticator auth = null;
@@ -25,8 +26,6 @@ public class RegistrationHandler extends ContextHandler implements HttpHandler {
 
     public void handle(HttpExchange exchange) throws UnsupportedEncodingException {
         if (exchange.getRequestMethod().equalsIgnoreCase("POST")) {
-            System.out.println("Request handled in thread " +
-            Thread.currentThread().getId());
             // Handle POST request
             handlePOST(exchange);
         } else {
@@ -51,7 +50,14 @@ public class RegistrationHandler extends ContextHandler implements HttpHandler {
                 String username = regInfo.getString("username");
                 String passwd = regInfo.getString("password");
                 String email = regInfo.getString("email");
-                User user = new User(username, email, passwd);
+
+                // Additional feature
+                String role = "user";
+                if(regInfo.has("role")) {
+                    role = regInfo.getString("role");
+                }
+
+                User user = new User(username, email, passwd, role);
 
                 if (username.strip().isEmpty() || passwd.strip().isEmpty() || email.strip().isEmpty()) {
                     // User info contains empty strings

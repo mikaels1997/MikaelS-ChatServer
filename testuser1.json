@@ -1,5 +1,6 @@
 {
     "username" : "username1",
     "password" : "password1",
+    "role" : "user",
     "email" : "user1.email@for-contacting.com"
 }

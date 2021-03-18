@@ -30,7 +30,7 @@ public class ChatServer {
                 // database file name -> arg[0]
                 // keystore file name -> arg[1]
                 // passphrase -> arg[2]
-                System.out.println("Didn't give 3 arguments");
+                System.out.println("Didn't give 3 arguments for launch");
                 return;
             }
             ChatDatabase database = ChatDatabase.getInstance();
@@ -49,11 +49,16 @@ public class ChatServer {
                 }
             });
 
-            // Initializing the contexts
+            // Initializing the chat, registration and administration contexts
             ChatAuthenticator auth = new ChatAuthenticator();
             HttpContext chatcontext = server.createContext("/chat", new ChatHandler());
             chatcontext.setAuthenticator(auth);
+
             server.createContext("/registration", new RegistrationHandler(auth));
+
+            AdminAuthenticator adm = new AdminAuthenticator();
+            HttpContext admcontext = server.createContext("/administration", new AdministrationHandler(adm));
+            admcontext.setAuthenticator(adm);
 
             // Starting the server
             ExecutorService executor = Executors.newCachedThreadPool();

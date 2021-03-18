@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
-// Shared methods for registration and chat
+// Shared methods for registration, chat and administration
 public abstract class ContextHandler {
 
     // Sends a specific error message to the user
@@ -18,9 +18,10 @@ public abstract class ContextHandler {
             OutputStream resBody = exchange.getResponseBody();
             resBody.write(msgBytes);
             resBody.close();
-            System.out.println("Responding to the user with error code " + rCode);
+            System.out.println("Responding to the user with error code " + rCode +
+             " Message to user: "+ msg);
         } catch (IOException ioe) {
-            System.out.println("An error has occurred");
+            System.out.println("An error while sending an errormessage has occurred");
         }
     }
 

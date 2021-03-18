@@ -14,13 +14,14 @@ public class ChatAuthenticator extends com.sun.net.httpserver.BasicAuthenticator
         if (database.validateUser(username, password)) {
             return true;
         } else {
-            System.out.println("GET request to /chat has been denied; info not correct");
+            System.out.println("GET request has been denied; info not correct");
             return false;
         }
     }
 
     public boolean addUser(User user) {
         // returns true if user does not already exist
-        return database.registerUser(user.getUsername(), user.getPasswd(), user.getEmail());
+        return database.registerUser(user.getUsername(), 
+        user.getPasswd(), user.getEmail(), user.getRole());
     }
 }

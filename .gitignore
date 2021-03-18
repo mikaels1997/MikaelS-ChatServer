@@ -26,3 +26,8 @@ hs_err_pid*
 /bin/
 /target/
 database.db
+testmessage1.json
+testChannelsCommand.json
+testCreateCommand.json
+testViewCommand.json
+testToLol.json
